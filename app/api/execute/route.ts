@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { routeModel, estimateTokens, TaskType } from '@/lib/modelRouter';
 import { executeMockTask } from '@/lib/mockExecutor';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 const ExecuteSchema = z.object({
   task_type: z.enum([
@@ -19,6 +19,8 @@ const ExecuteSchema = z.object({
 export async function POST(req: Request) {
   try {
     const body = ExecuteSchema.parse(await req.json());
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     const inputChars = body.input_text.length;
 

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 export async function GET() {
+  const supabaseAdmin = getSupabaseAdmin();
   // Pull last N routing decisions and compute stats in code (simple for POC)
   const { data, error } = await supabaseAdmin
     .from('routing_decisions')
