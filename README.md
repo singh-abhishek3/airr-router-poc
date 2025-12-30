@@ -1,259 +1,306 @@
-Below is a **complete, clean `README.md` file** you can copy-paste directly into your repo.
-It is written so **anyone can clone the repo and get to Phase 1 successfully** without you present.
-
----
-
-````md
 # Airr Model Routing & Cost Controller (POC)
 
-This repository contains a runnable Proof of Concept for **Lane N: Model Routing & Cost Controller** for Airr 3.0.
+## What this project is
 
-The goal of this POC is to demonstrate:
+- Proof of Concept for **Lane N — Model Routing & Cost Controller**
+- Demonstrates **AI systems thinking**, not a chat app
+- Focuses on:
 
-- How AI tasks can be routed to different models based on cost, latency, and accuracy constraints
-- How every routing decision is logged for auditability and cost control
-- A repo-first, reproducible setup that anyone can clone and run
-
-This README currently covers **Phase 0 (Scaffold)** and **Phase 1 (Supabase schema + migrations)**.
+  - model routing (cost / latency / priority)
+  - auditability of AI decisions
+  - cost per successful task
+  - production-ready deployment
 
 ---
 
-## What this POC will do (once complete)
+## What the system does
 
-- Accept AI tasks (summarize, classify, extract, rewrite)
-- Route tasks to an optimal model based on simple rules
-- Track cost, latency, and success/failure per task
-- Store all data in Supabase with RLS enabled
-- Expose APIs and dashboards (Phase 2+)
+- Accepts AI tasks:
+
+  - task type (summarization, rewrite, etc.)
+  - priority (low / medium / high)
+  - cost target (low / balanced / high accuracy)
+  - input text
+
+- Routes tasks to a **model tier** using rules
+- Logs:
+
+  - chosen model
+  - routing reasons
+  - estimated cost
+  - success / failure
+
+- Stores all data in **Supabase**
+- Shows everything on a **dashboard**
+- Supports execution via:
+
+  - UI (manual input)
+  - API
+  - n8n workflow
 
 ---
 
 ## Tech stack
 
-- **Next.js (App Router)** – UI + API routes
-- **Supabase** – Postgres database, RLS, migrations
-- **Supabase CLI** – reproducible database setup
-- **n8n** – orchestration workflows (later phase)
+- Next.js (App Router)
+- Supabase (Postgres + RLS)
+- Supabase CLI (migrations)
+- Docker
+- n8n (Docker)
+- Coolify-ready deployment
 
 ---
 
-## Prerequisites
+## Repo structure
+
+- `app/`
+
+  - `api/execute` – run task
+  - `api/tasks` – list tasks
+  - `api/stats` – cost & usage stats
+  - `api/health` – health check
+  - `dashboard/` – UI + manual input popover
+
+- `src/lib/supabaseAdmin.ts` – server-side Supabase client
+- `supabase/migrations/` – schema + seed data
+- `infra/n8n/` – n8n workflow exports
+- `Dockerfile`, `.dockerignore`, `.env.example`
+
+---
+
+## Prerequisites (install once)
 
 - Node.js **18+**
-- npm
-- Supabase account (free tier is fine)
+- Docker Desktop
+- Supabase account
 - Supabase CLI
 
 ### Install Supabase CLI (macOS)
 
 ```bash
 brew install supabase/tap/supabase
-supabase --version
 ```
-````
 
 ---
 
-## Phase 0 — Local scaffold setup
+## Phase 0 — Clone & run locally
 
-### 1) Clone the repository
+- Clone repo
 
 ```bash
 git clone <REPO_URL>
 cd airr-router-poc
 ```
 
-### 2) Install dependencies
+- Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3) Start the dev server
+- Start dev server
 
 ```bash
 npm run dev
 ```
 
-### 4) Verify local routes
-
-- UI page: [http://localhost:3000/run](http://localhost:3000/run)
-- Health API: [http://localhost:3000/api/health](http://localhost:3000/api/health)
-
-If both load successfully, Phase 0 is complete.
+- Open dashboard
+  [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
 
 ---
 
-## Phase 1 — Database setup (Supabase schema + migrations)
+## Phase 1 — Supabase setup
 
-This project uses **Supabase CLI migrations**, committed to the repo, so database setup is reproducible.
+- Create Supabase project:
 
-### 1) Create a Supabase project (cloud)
+  - name: `airr-router-poc`
+  - save DB password
 
-Go to the Supabase Dashboard and create a new project:
+- Copy **Project ID**
+- Supabase URL format:
 
-- Project name: `airr-router-poc`
-- Choose a region
-- Set a database password (save it)
+  ```
+  https://<PROJECT_ID>.supabase.co
+  ```
 
-After creation, note the **Project ID (ref)**:
-
-- Supabase Dashboard → Project Settings → General → **Project ID**
-
-Your Supabase URL will be:
-
-```
-https://<PROJECT_ID>.supabase.co
-```
-
----
-
-### 2) Login to Supabase CLI (one-time per machine)
+### Link Supabase project
 
 ```bash
 supabase login
-```
-
-This opens a browser window to authenticate your Supabase account.
-
----
-
-### 3) Link this repo to your Supabase project
-
-Run from the repo root:
-
-```bash
 supabase link --project-ref <PROJECT_ID>
 ```
 
-Example:
-
-```bash
-supabase link --project-ref ktlosobescedbldzcfru
-```
-
-You will be prompted for the **database password** you set when creating the project.
-
----
-
-### 4) Apply database migrations
+### Apply migrations
 
 ```bash
 supabase db push
 ```
 
-This applies the following migrations from `supabase/migrations/`:
-
-- `001_init.sql` – core tables and indexes
-- `002_rls.sql` – Row Level Security (read-only policies)
-- `003_seed.sql` – seed data (models + sample tasks)
-
-> Note: `supabase db diff` may require Docker. It is optional and not required.
-
----
-
-### 5) Verify database setup
-
-In the Supabase Dashboard → **Table Editor**, confirm:
-
-- Tables exist:
-
-  - `models`
-  - `tasks`
-  - `routing_decisions`
-  - `task_outputs`
-
-- `models` table has **4 seeded rows**
-- `tasks` table has **2 seeded rows**
-- **RLS is enabled** on all tables
-
----
-
-## Environment variables
-
-Create a local `.env.local` file (do **NOT** commit this):
+### Create `.env.local` (DO NOT COMMIT)
 
 ```env
 SUPABASE_URL=https://<PROJECT_ID>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_XXXXXXXXXXXXXXXX
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx
 NEXT_PUBLIC_N8N_WEBHOOK_URL=
 ```
 
-### Where to get the Service Role / Secret key
+Restart dev server after this.
 
-- Supabase Dashboard → **Project Settings → API Keys**
-- Scroll to **Secret keys**
-- Copy the key starting with `sb_secret_`
+---
 
-> The service role key bypasses RLS.
-> It must be used **server-side only**.
+## Phase 2 — Core APIs
 
-Restart the dev server after setting env vars:
+- Execute task
 
 ```bash
-npm run dev
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_type": "summarization",
+    "priority": "high",
+    "cost_target": "balanced",
+    "input_text": "Transcript imports failing."
+  }'
+```
+
+- List tasks
+
+```bash
+curl http://localhost:3000/api/tasks
+```
+
+- View stats
+
+```bash
+curl http://localhost:3000/api/stats
 ```
 
 ---
 
-## Repo structure (current)
+## Phase 3 — n8n orchestration
 
-```
-app/
-  api/
-    health/
-      route.ts
-  run/
-    page.tsx
+- Run n8n via Docker
 
-supabase/
-  migrations/
-    001_init.sql
-    002_rls.sql
-    003_seed.sql
-
-infra/
-  n8n/               # n8n workflow exports (later phase)
-
-.env.example
-README.md
+```bash
+docker run -it --rm \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  n8nio/n8n
 ```
 
----
+- Open n8n UI
+  [http://localhost:5678](http://localhost:5678)
 
-## Phase status
+- Create workflow:
 
-- ✅ Phase 0: Next.js scaffold running locally
-- ✅ Phase 1: Supabase schema, RLS, and seed data applied via CLI
-- ⏭️ Phase 2: Next.js API routes + model routing logic
-- ⏭️ Phase 3: n8n workflow orchestration
-- ⏭️ Phase 4: UI dashboards + analytics
-- ⏭️ Phase 5: Docker + Coolify deployment
+  - Manual Trigger
+  - HTTP Request node
 
----
+### HTTP Request config
 
-## Notes
+- Method: POST
+- URL:
 
-- This repo is intentionally scoped for fast iteration.
-- Real LLM calls are deferred; routing and logging are the focus.
-- All schema changes are tracked via migrations to keep the setup reproducible.
+  ```
+  http://host.docker.internal:3000/api/execute
+  ```
 
----
+- Header:
 
-## Next step
+  ```
+  Content-Type: application/json
+  ```
 
-Proceed to **Phase 2** to:
+- Body:
 
-- Add a server-side Supabase client
-- Implement `POST /api/execute`
-- Insert tasks, routing decisions, and outputs in one flow
-
+```json
+{
+  "task_type": "summarization",
+  "priority": "high",
+  "cost_target": "balanced",
+  "input_text": "Customer: ASU. Transcript imports failing."
+}
 ```
 
 ---
 
-If you want, next I can:
-- Tighten this README for **executive reviewers**
-- Add a **“15-minute setup”** quickstart section
-- Or move straight into **Phase 2** with the same step-by-step discipline
+## Phase 4 — Dashboard UI
+
+- Open dashboard:
+
+  ```
+  http://localhost:3000/dashboard
+  ```
+
+### Dashboard features
+
+- Execution stats
+- Cost per successful task
+- Model usage
+- Recent tasks
+- **Run manual task** popover:
+
+  - select task type
+  - select priority
+  - select cost target
+  - paste input text
+  - submit → dashboard refreshes
+
+---
+
+## Phase 5 — Docker (production)
+
+- Build image
+
+```bash
+docker build -t airr-router-poc .
 ```
+
+- Run container
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e SUPABASE_URL=https://<PROJECT_ID>.supabase.co \
+  -e SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx \
+  airr-router-poc
+```
+
+- Open dashboard
+  [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
+
+---
+
+## Deploy on Coolify (NAS)
+
+- New Application
+- Source: Git repo
+- Build: Dockerfile
+- Expose port: `3000`
+- Healthcheck: `/api/health`
+- Env vars:
+
+  - SUPABASE_URL
+  - SUPABASE_SERVICE_ROLE_KEY (mark secret)
+
+---
+
+## AI systems thinking (why this matters)
+
+- Models are treated as **execution units**
+- Routing is policy-driven (cost / latency / priority)
+- Every decision is logged and auditable
+- Cost per success is measurable
+- UI is thin; intelligence lives in routing + control plane
+
+---
+
+## Demo flow (recommended)
+
+- Open dashboard
+- Run manual task (high priority)
+- Show chosen model + cost
+- Change cost target → rerun
+- Show stats updating
+- Trigger same task via n8n
+
+---
