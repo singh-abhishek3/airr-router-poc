@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+import RunManualTaskPopover from './RunManualTaskPopover';
 
 type Stats = {
   ok: boolean;
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Actions */}
-      <section
+      {/* <section
         style={{
           marginTop: 20,
           display: 'flex',
@@ -117,6 +118,12 @@ export default async function DashboardPage() {
             textDecoration: 'none',
             display: 'inline-block',
           }}>
+          Refresh
+        </a>
+      </section> */}
+      <section style={{ marginTop: 20, display: 'flex', gap: 12 }}>
+        <RunManualTaskPopover />
+        <a href='/dashboard' style={{ ...buttonStyle, textDecoration: 'none' }}>
           Refresh
         </a>
       </section>
