@@ -1,0 +1,222 @@
+{
+  "name": "Airr – Execute Task Orchestrator",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6cef5c08-b5aa-4562-a34a-dc056a624f29",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/api/execute",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task_type",
+              "value": "summarization"
+            },
+            {
+              "name": "priority",
+              "value": "high"
+            },
+            {
+              "name": "cost_target",
+              "value": "balanced"
+            },
+            {
+              "name": "input_text",
+              "value": "Customer: ASU. Transcript imports failing for Banner files. INVALID_TERM_CODE. Go-live in 10 days."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ec2f4c07-311b-4bae-8e01-70f8cd9133d8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "457cd5a6-32e9-4afc-9d37-7d4cbcb8b64b",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ce01a1a9-ae3a-47ff-885b-fa117eececf0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d71ce24c-d0c0-4a94-a895-1c34fe0e7e18",
+              "name": "status",
+              "value": "SUCCESS",
+              "type": "string"
+            },
+            {
+              "id": "b7cecd4a-4c20-4f76-866a-56b2cc7976bc",
+              "name": "task_id",
+              "value": "={{ $json.task_id }}",
+              "type": "string"
+            },
+            {
+              "id": "aa528078-8bb4-4ffa-8966-ea03142debfb",
+              "name": "model",
+              "value": "={{ $json.model_chosen }}",
+              "type": "string"
+            },
+            {
+              "id": "b5acbe97-598c-4a73-a806-53081974d82e",
+              "name": "cost_usd",
+              "value": "={{ $json.estimated_cost_usd }}",
+              "type": "string"
+            },
+            {
+              "id": "6467aeed-2a67-4063-98e9-0074d95f108f",
+              "name": "latency_ms",
+              "value": "={{ $json.latency_ms }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "9ab543fa-abc6-4dba-88aa-2ecbcbdcc632",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52b9735d-e04f-4f71-9d70-670dd4d3ca5e",
+              "name": "status",
+              "value": "FAILED",
+              "type": "string"
+            },
+            {
+              "id": "4e511930-2940-4c22-a5fa-b46252ce2c0d",
+              "name": "error",
+              "value": "={{ $json.error || \"Unknown error\" }}",
+              "type": "string"
+            },
+            {
+              "id": "05530ab0-d5d0-41f5-962f-c76e679316eb",
+              "name": "raw_response",
+              "value": "={{ $json }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        96
+      ],
+      "id": "e7585785-9ba2-4634-9fb7-97ecc1224477",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5d0bfe19-9d16-4cf9-bba2-7a1a8e1849a3",
+  "meta": {
+    "instanceId": "988a4973d2255f6f8f3eed68ff1f696a1cc4acb83bd5b18a981d35c3493cc9ed"
+  },
+  "id": "MoIwzIATdshALa67",
+  "tags": []
+}
